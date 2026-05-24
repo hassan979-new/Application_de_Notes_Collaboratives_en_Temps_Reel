@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotes } from '../../hooks/useNotes';
+import { useAuth } from '../../hooks/useAuth';
 import ShareModal from './ShareModal';
-
 
 const NoteItem = ({ note }) => {
   const [showShare, setShowShare] = useState(false);
   const { deleteNote } = useNotes();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  const isOwner = note.owner === user?.id || note.owner?._id === user?.id;
 
   const handleDelete = async (e) => {
     e.stopPropagation();
@@ -20,7 +23,9 @@ const NoteItem = ({ note }) => {
     <div className="note-item" onClick={() => navigate(`/notes/${note._id}`)}>
       <div className="note-item-header">
         <h3>{note.title}</h3>
-        <button className="btn-delete" onClick={handleDelete}>✕</button>
+        {isOwner && (
+          <button className="btn-delete" onClick={handleDelete}>✕</button>
+        )}
       </div>
       <div
         className="note-preview"
@@ -30,12 +35,14 @@ const NoteItem = ({ note }) => {
         <span>{new Date(note.updatedAt).toLocaleDateString()}</span>
         {note.sharedWith?.length > 0 && <span>👥 Partagée</span>}
       </div>
-      <button 
-        className="btn-share"
-        onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
+      {isOwner && (
+        <button
+          className="btn-share"
+          onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
         >
-        🔗 Partager
+          🔗 Partager
         </button>
+      )}
       {showShare && (
         <ShareModal noteId={note._id} onClose={() => setShowShare(false)} />
       )}
